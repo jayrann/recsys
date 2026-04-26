@@ -1,10 +1,15 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { User, Star, BarChart3, Loader2, Film } from "lucide-react"
+import { User, Star, BarChart3, Loader2, Film, Mail } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { fetchProfile, getUserId, type UserProfile, type WeightProfile } from "@/lib/api"
+import {
+  fetchProfile,
+  getUserId,
+  type UserProfile,
+  type WeightProfile,
+} from "@/lib/api"
 import { useRouter } from "next/navigation"
 
 const WEIGHT_LABELS: Record<keyof WeightProfile, string> = {
@@ -19,7 +24,9 @@ function WeightBar({ label, value }: { label: string; value: number }) {
   const pct = Math.round(value * 100)
   return (
     <div className="flex items-center gap-3">
-      <span className="w-36 shrink-0 text-xs text-muted-foreground">{label}</span>
+      <span className="w-36 shrink-0 text-xs text-muted-foreground">
+        {label}
+      </span>
       <div className="flex-1 rounded-full bg-muted h-2">
         <div
           className="h-2 rounded-full bg-primary transition-all duration-500"
@@ -43,13 +50,11 @@ export default function ProfilePage() {
   useEffect(() => {
     if (loadedRef.current) return
     loadedRef.current = true
-
     const userId = getUserId()
     if (!userId) {
       router.replace("/login")
       return
     }
-
     fetchProfile(userId)
       .then(setProfile)
       .catch(() => setError("Failed to load profile"))
@@ -84,22 +89,31 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
-              <User className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">User ID</p>
-              <p className="text-xl font-bold text-foreground">
-                {profile?.user_id}
+      {/* User Info Card */}
+      <Card className="mb-6">
+        <CardContent className="flex items-center gap-4 p-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10">
+            <User className="h-7 w-7 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-serif text-lg font-bold text-foreground">
+              {profile?.username ?? `User ${profile?.user_id}`}
+            </p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground truncate">
+                {profile?.email ?? "No email on record"}
               </p>
             </div>
-          </CardContent>
-        </Card>
+            <Badge variant="secondary" className="mt-2 text-xs">
+              User ID: {profile?.user_id}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
 
+      {/* Stats Grid */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
@@ -127,22 +141,23 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* AGA info */}
-      {profile?.aga_mae !== null && profile?.aga_mae !== undefined && (
-        <Card className="mb-6">
+        <Card>
           <CardContent className="flex items-center gap-3 p-4">
-            <Badge variant="secondary">AGA Best MAE</Badge>
-            <span className="text-sm font-semibold text-foreground">
-              {profile.aga_mae.toFixed(4)}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              — lower is better
-            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
+              <BarChart3 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Best MAE</p>
+              <p className="text-xl font-bold text-foreground">
+                {profile?.aga_mae !== null && profile?.aga_mae !== undefined
+                  ? profile.aga_mae.toFixed(4)
+                  : "—"}
+              </p>
+            </div>
           </CardContent>
         </Card>
-      )}
+      </div>
 
       {/* Weight Profile */}
       {profile?.weight_profile && (
