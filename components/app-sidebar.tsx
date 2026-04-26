@@ -2,17 +2,36 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Star, ThumbsUp, Film } from "lucide-react"
+import {
+  LayoutDashboard,
+  Star,
+  ThumbsUp,
+  Film,
+  User,
+  Settings,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getRole } from "@/lib/api"
+import { useEffect, useState } from "react"
 
-const sidebarLinks = [
+const baseLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/rate", label: "Rate Movies", icon: Star },
   { href: "/recommendations", label: "Recommendations", icon: ThumbsUp },
+  { href: "/profile", label: "My Profile", icon: User },
 ]
+
+const adminLink = { href: "/admin", label: "Admin", icon: Settings }
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    setIsAdmin(getRole() === "admin")
+  }, [])
+
+  const links = isAdmin ? [...baseLinks, adminLink] : baseLinks
 
   return (
     <aside className="hidden w-56 shrink-0 border-r border-border bg-card lg:block">
@@ -23,9 +42,8 @@ export function AppSidebar() {
             Navigation
           </span>
         </div>
-
         <nav className="flex flex-col gap-1">
-          {sidebarLinks.map((link) => {
+          {links.map((link) => {
             const Icon = link.icon
             return (
               <Link
@@ -44,7 +62,6 @@ export function AppSidebar() {
             )
           })}
         </nav>
-
         <div className="mt-auto rounded-md border border-border bg-muted px-3 py-3">
           <p className="text-xs font-medium text-foreground">About</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">

@@ -15,15 +15,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { login, saveAuth } from "@/lib/api"
+import { register } from "@/lib/api"
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter()
   const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<{
     username?: string
+    email?: string
     password?: string
     api?: string
   }>({})
@@ -31,26 +33,23 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const newErrors: { username?: string; password?: string } = {}
-    if (!username) newErrors.username = "Username is required"
-    if (!password) newErrors.password = "Password is required"
-    else if (password.length < 6)
+    const newErrors: typeof errors = {}
+    if (!username || username.length < 3)
+      newErrors.username = "Username must be at least 3 characters"
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      newErrors.email = "Enter a valid email address"
+    if (!password || password.length < 6)
       newErrors.password = "Password must be at least 6 characters"
     setErrors(newErrors)
     if (Object.keys(newErrors).length > 0) return
 
     setLoading(true)
     try {
-      const data = await login(username, password)
-      saveAuth(data.access_token, data.user_id)
-      localStorage.setItem("mcrs_role", data.role)
-      router.replace("/dashboard")
+      await register(username, email, password)
+      router.replace("/login")
     } catch (err: unknown) {
       setErrors({
-        api:
-          err instanceof Error
-            ? err.message
-            : "Login failed. Check your credentials.",
+        api: err instanceof Error ? err.message : "Registration failed",
       })
     } finally {
       setLoading(false)
@@ -73,9 +72,9 @@ export default function LoginPage() {
       <main className="flex flex-1 items-center justify-center px-4 py-12">
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
-            <CardTitle className="font-serif text-xl">Welcome Back</CardTitle>
+            <CardTitle className="font-serif text-xl">Create Account</CardTitle>
             <CardDescription>
-              Sign in to access your movie recommendations
+              Register to start getting personalised movie recommendations
             </CardDescription>
           </CardHeader>
 
@@ -92,7 +91,7 @@ export default function LoginPage() {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="your username"
+                  placeholder="Choose a username"
                   value={username}
                   onChange={(e) => {
                     setUsername(e.target.value)
@@ -106,12 +105,30 @@ export default function LoginPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    if (errors.email)
+                      setErrors((p) => ({ ...p, email: undefined }))
+                  }}
+                />
+                {errors.email && (
+                  <p className="text-xs text-destructive">{errors.email}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder="At least 6 characters"
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value)
@@ -144,19 +161,19 @@ export default function LoginPage() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    Creating account...
                   </>
                 ) : (
-                  "Sign In"
+                  "Create Account"
                 )}
               </Button>
               <p className="text-center text-xs text-muted-foreground">
-                Don&apos;t have an account?{" "}
+                Already have an account?{" "}
                 <Link
-                  href="/register"
+                  href="/login"
                   className="text-primary underline-offset-4 hover:underline"
                 >
-                  Register
+                  Sign in
                 </Link>
               </p>
               <Button asChild variant="ghost" size="sm" className="w-full">
